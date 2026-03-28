@@ -2,13 +2,16 @@
 import { Route, Routes } from "react-router-dom";
 import PrivateRoute from "./components/auth/PrivateRoute";
 
+import SignIn from "./components/auth/SignIn";
+
 function MainRouter(){
     return (
         <>
         <Routes>
-            <Route path="/" element={
+            <Route exact path="/signin" element={<SignIn />} />
+            <Route exact path="/placeholder" element={
                 <PrivateRoute>
-                    //home page component will be here
+                    //this will be the home page component
                 </PrivateRoute>
                 } />
         </Routes>
