@@ -7,3 +7,5 @@ class commentModel{
         this.post = post;
     }
 }
+
+export default commentModel;
