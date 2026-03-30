@@ -1,5 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { isAuthenticated } from '../datasource/auth-helper';
+import { isAuthenticated } from './auth/auth-helper';
 import userApi from '../datasource/api-user';
 
 function Navigation() {

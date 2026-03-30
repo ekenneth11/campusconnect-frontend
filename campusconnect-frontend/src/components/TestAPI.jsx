@@ -3,7 +3,7 @@ import userApi from '../datasource/api-user';
 import postApi from '../datasource/api-post';
 import commentApi from '../datasource/api-comment';
 import rsvpApi from '../datasource/api-rsvp';
-import { isAuthenticated, getToken } from '../datasource/auth-helper';
+import { isAuthenticated, getToken } from './auth/auth-helper';  // Fixed path
 
 function TestAPI() {
     const [testResults, setTestResults] = useState([]);
