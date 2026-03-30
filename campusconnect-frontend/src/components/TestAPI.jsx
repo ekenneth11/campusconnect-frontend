@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import userApi from '../api/api-user';
-import postApi from '../api/api-post';
-import commentApi from '../api/api-comment';
-import rsvpApi from '../api/api-rsvp';
-import { isAuthenticated, getToken } from '../api/auth-helper';
+import userApi from '../datasource/api-user';
+import postApi from '../datasource/api-post';
+import commentApi from '../datasource/api-comment';
+import rsvpApi from '../datasource/api-rsvp';
+import { isAuthenticated, getToken } from '../datasource/auth-helper';
 
 function TestAPI() {
     const [testResults, setTestResults] = useState([]);

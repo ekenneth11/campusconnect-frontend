@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CirclePlus } from 'lucide-react';
 import { Surface, Form, Fieldset, TextField, Label, Input, Button, FieldError, Alert } from '@heroui/react';
-import userApi from '../../api/api-user';
+import userApi from '../../datasource/api-user';
 
 function Register() {
     const navigate = useNavigate();

@@ -1,6 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { isAuthenticated } from '../api/auth-helper';
-import userApi from '../api/api-user';
+import { isAuthenticated } from '../datasource/auth-helper';
+import userApi from '../datasource/api-user';
 
 function Navigation() {
     const navigate = useNavigate();
