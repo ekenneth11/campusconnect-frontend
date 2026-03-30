@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CirclePlus } from 'lucide-react';
+import { CirclePlus, Mail, Lock, User, UserCircle } from 'lucide-react';
 import userApi from '../../datasource/api-user';
 
 function Register() {

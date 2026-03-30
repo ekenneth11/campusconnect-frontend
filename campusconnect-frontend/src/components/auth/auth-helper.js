@@ -6,13 +6,17 @@ const authenticate = (token, cb) => {
         
         try {
             let payload = jwtDecode(token);
-            sessionStorage.setItem("username", payload.username || payload.email);
-            sessionStorage.setItem("userId", payload.userId || payload._id);
+            sessionStorage.setItem("username", payload.username);
+            sessionStorage.setItem("userId", payload.id);
+            sessionStorage.setItem("userEmail", payload.email);
         } catch (error) {
             console.error('Error decoding token:', error);
         }
     }
-    if (cb) cb();
+    // Check if cb is a function before calling it
+    if (cb && typeof cb === 'function') {
+        cb();
+    }
 }
 
 const getToken = () => {
@@ -26,19 +30,7 @@ const isAuthenticated = () => {
     if (typeof window === "undefined") {
         return false;
     }
-    const token = sessionStorage.getItem("token");
-    if (!token) return false;
-    
-    try {
-        const decoded = jwtDecode(token);
-        if (decoded.exp && decoded.exp < Date.now() / 1000) {
-            clearJWT();
-            return false;
-        }
-        return true;
-    } catch (error) {
-        return false;
-    }
+    return !!sessionStorage.getItem("token");
 }
 
 const clearJWT = () => {
@@ -46,7 +38,7 @@ const clearJWT = () => {
         sessionStorage.removeItem("token");
         sessionStorage.removeItem("username");
         sessionStorage.removeItem("userId");
-        sessionStorage.removeItem("email");
+        sessionStorage.removeItem("userEmail");
     }   
 }
 

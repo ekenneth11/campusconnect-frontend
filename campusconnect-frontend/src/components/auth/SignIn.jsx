@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { LogIn, Mail, Lock } from 'lucide-react';
+import userApi from '../../datasource/api-user';
 
 function SignIn() {
     const navigate = useNavigate();
@@ -34,31 +35,26 @@ function SignIn() {
         setError('');
         
         try {
-            console.log('Logging in with:', formData);
-            
-            const response = await fetch('https://campusconnect-backend-8tq2.onrender.com/api/users/signin', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(formData)
+            console.log('Attempting login with:', { email: formData.email });
+            const response = await userApi.signin({
+                email: formData.email,
+                password: formData.password
             });
             
-            const data = await response.json();
-            console.log('Login response:', data);
+            console.log('Login response received:', response);
             
-            if (response.ok && data.token) {
-                // Store token
-                sessionStorage.setItem('token', data.token);
-                sessionStorage.setItem('user', JSON.stringify(data.user));
-                navigate(from, { replace: true });
+            // Check if we got a token
+            if (response && response.token) {
+                console.log('Token received, redirecting to dashboard...');
+                // Force navigation to dashboard
+                navigate('/dashboard', { replace: true });
             } else {
-                setError(data.message || 'Invalid email or password');
+                console.error('No token in response:', response);
+                setError('Login failed: No token received');
             }
         } catch (err) {
             console.error('Login error:', err);
-            setError('Cannot connect to server. Please check your connection.');
-        } finally {
+            setError(err.message || 'Invalid email or password');
             setLoading(false);
         }
     };

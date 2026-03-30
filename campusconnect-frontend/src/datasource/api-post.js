@@ -2,7 +2,7 @@ import api from './api-helper';
 
 const createPost = async (postData) => {
     try {
-        return await api.post('/posts', postData);
+        return await api.post('/api/posts', postData);
     } catch (error) {
         console.error('Create post error:', error);
         throw error;
@@ -11,7 +11,8 @@ const createPost = async (postData) => {
 
 const getAllPosts = async () => {
     try {
-        return await api.get('/posts');
+        const response = await api.get('/api/posts');
+        return response;
     } catch (error) {
         console.error('Get all posts error:', error);
         throw error;
@@ -20,7 +21,7 @@ const getAllPosts = async () => {
 
 const getPostById = async (postId) => {
     try {
-        return await api.get(`/posts/${postId}`);
+        return await api.get(`/api/posts/${postId}`);
     } catch (error) {
         console.error('Get post by ID error:', error);
         throw error;
@@ -29,7 +30,7 @@ const getPostById = async (postId) => {
 
 const updatePost = async (postId, postData) => {
     try {
-        return await api.put(`/posts/${postId}`, postData);
+        return await api.put(`/api/posts/${postId}`, postData);
     } catch (error) {
         console.error('Update post error:', error);
         throw error;
@@ -38,17 +39,19 @@ const updatePost = async (postId, postData) => {
 
 const deletePost = async (postId) => {
     try {
-        return await api.delete(`/posts/${postId}`);
+        return await api.delete(`/api/posts/${postId}`);
     } catch (error) {
         console.error('Delete post error:', error);
         throw error;
     }
 };
 
-export default {
+const postApi = {
     createPost,
     getAllPosts,
     getPostById,
     updatePost,
     deletePost
 };
+
+export default postApi;
