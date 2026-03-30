@@ -1,24 +1,26 @@
-//this will be all the routers will be defined here and then imported in App.jsx
-import { Route, Routes } from "react-router-dom";
+import { Route, Routes, Navigate } from "react-router-dom";
 import PrivateRoute from "./components/auth/PrivateRoute";
-
 import SignIn from "./components/auth/SignIn";
 import Register from "./components/auth/Register";
+import Dashboard from "./components/Dashboard";
+import TestAPI from "./components/TestAPI";
+import Home from "./components/Home";
 
-function MainRouter(){
+function MainRouter() {
     return (
-        <>
         <Routes>
-            <Route exact path="/signin" element={<SignIn />} />
-            <Route exact path="/register" element={<Register />} />
-            <Route exact path="/placeholder" element={
-                <PrivateRoute>
-                    //this will be the home page component
-                </PrivateRoute>
-                } />
+            {/* Public Routes */}
+            <Route path="/" element={<Home />} />
+            <Route path="/signin" element={<SignIn />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/test-api" element={<TestAPI />} />
+            
+            {/* Protected Routes - require authentication */}
+            <Route element={<PrivateRoute />}>
+                <Route path="/dashboard" element={<Dashboard />} />
+            </Route>
         </Routes>
-        </>
-    )
+    );
 }
 
 export default MainRouter;
