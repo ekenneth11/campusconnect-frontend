@@ -1,13 +1,11 @@
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { LogIn } from 'lucide-react';
-import { Surface, Button, Form, TextField, Label, Input, Alert } from '@heroui/react';
-import userApi from '../../datasource/api-user';
+import { LogIn, Mail, Lock } from 'lucide-react';
 
 function SignIn() {
     const navigate = useNavigate();
     const location = useLocation();
-    const [isLoading, setIsLoading] = useState(false);
+    const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [formData, setFormData] = useState({
         email: '',
@@ -16,82 +14,129 @@ function SignIn() {
 
     const from = location.state?.from?.pathname || '/dashboard';
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setIsLoading(true);
-        setError('');
-        
-        try {
-            await userApi.signin(formData);
-            navigate(from, { replace: true });
-        } catch (err) {
-            setError(err.message || 'Login failed. Please check your credentials.');
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
     const handleChange = (e) => {
         setFormData({
             ...formData,
             [e.target.name]: e.target.value
         });
-    };
-
-    const handleReset = () => {
-        setFormData({
-            email: '',
-            password: ''
-        });
         setError('');
     };
 
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        
+        if (!formData.email || !formData.password) {
+            setError('Please enter both email and password');
+            return;
+        }
+        
+        setLoading(true);
+        setError('');
+        
+        try {
+            console.log('Logging in with:', formData);
+            
+            const response = await fetch('https://campusconnect-backend-8tq2.onrender.com/api/users/signin', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(formData)
+            });
+            
+            const data = await response.json();
+            console.log('Login response:', data);
+            
+            if (response.ok && data.token) {
+                // Store token
+                sessionStorage.setItem('token', data.token);
+                sessionStorage.setItem('user', JSON.stringify(data.user));
+                navigate(from, { replace: true });
+            } else {
+                setError(data.message || 'Invalid email or password');
+            }
+        } catch (err) {
+            console.error('Login error:', err);
+            setError('Cannot connect to server. Please check your connection.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return (
-        <>
-            <div className="flex items-center justify-center rounded-3xl bg-surface p-6">
-                <Surface className="w-full min-w-[380px]">
-                    <h2 className="text-2xl font-bold mb-6 text-center">Sign In</h2>
-                    {error && (
-                        <Alert color="danger" className="mb-4">
-                            {error}
-                        </Alert>
-                    )}
-                    <Form onSubmit={handleSubmit}>
-                        <TextField
-                            isRequired
-                            name="email"
-                            type="email"
-                            value={formData.email}
-                            onChange={handleChange}
-                            className="mb-4"
-                        >
-                            <Label>Email</Label>
-                            <Input placeholder="trial@example.com" />
-                        </TextField>
-                        <TextField
-                            isRequired
-                            name="password"
-                            type="password"
-                            value={formData.password}
-                            onChange={handleChange}
-                            className="mb-4"
-                        >
-                            <Label>Password</Label>
-                            <Input placeholder="Enter your password" />
-                        </TextField>
-                        <div className="flex gap-2 justify-end">
-                            <Button type="submit" isLoading={isLoading} color="primary">
-                                <LogIn />
-                                Sign in
-                            </Button>
-                            <Button type="button" variant="secondary" onClick={handleReset}>
-                                Reset
-                            </Button>
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-4 sm:px-6 lg:px-8">
+            <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8">
+                <div className="text-center mb-8">
+                    <h2 className="text-3xl font-bold text-gray-900">Welcome Back</h2>
+                    <p className="text-gray-600 mt-2">Sign in to your account</p>
+                </div>
+                
+                {error && (
+                    <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg">
+                        {error}
+                    </div>
+                )}
+                
+                <form onSubmit={handleSubmit} className="space-y-5">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Email Address
+                        </label>
+                        <div className="relative">
+                            <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                            <input
+                                type="email"
+                                name="email"
+                                value={formData.email}
+                                onChange={handleChange}
+                                className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                placeholder="you@example.com"
+                                required
+                            />
                         </div>
-                    </Form>
-                </Surface>
+                    </div>
+                    
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Password
+                        </label>
+                        <div className="relative">
+                            <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                            <input
+                                type="password"
+                                name="password"
+                                value={formData.password}
+                                onChange={handleChange}
+                                className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                placeholder="••••••••"
+                                required
+                            />
+                        </div>
+                    </div>
+                    
+                    <button
+                        type="submit"
+                        disabled={loading}
+                        className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                    >
+                        <LogIn className="w-5 h-5" />
+                        {loading ? 'Signing in...' : 'Sign in'}
+                    </button>
+                </form>
+                
+                <div className="mt-6 text-center">
+                    <p className="text-sm text-gray-600">
+                        Don't have an account?{' '}
+                        <button
+                            onClick={() => navigate('/register')}
+                            className="text-blue-600 hover:text-blue-700 font-medium"
+                        >
+                            Sign up
+                        </button>
+                    </p>
+                </div>
             </div>
-        </>
+        </div>
     );
 }
 

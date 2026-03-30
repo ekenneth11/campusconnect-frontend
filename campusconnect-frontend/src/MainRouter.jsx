@@ -9,13 +9,10 @@ import Home from "./components/Home";
 function MainRouter() {
     return (
         <Routes>
-            {/* Public Routes */}
             <Route path="/" element={<Home />} />
             <Route path="/signin" element={<SignIn />} />
             <Route path="/register" element={<Register />} />
             <Route path="/test-api" element={<TestAPI />} />
-            
-            {/* Protected Routes - require authentication */}
             <Route element={<PrivateRoute />}>
                 <Route path="/dashboard" element={<Dashboard />} />
             </Route>
