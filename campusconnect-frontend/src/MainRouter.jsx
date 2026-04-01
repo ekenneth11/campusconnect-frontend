@@ -12,7 +12,7 @@ function MainRouter() {
             <Route path="/" element={<Home />} />
             <Route path="/signin" element={<SignIn />} />
             <Route path="/register" element={<Register />} />
-            <Route path="/test-api" element={<TestAPI />} />
+            {/* <Route path="/test-api" element={<TestAPI />} /> */}
             <Route element={<PrivateRoute />}>
                 <Route path="/dashboard" element={<Dashboard />} />
             </Route>
