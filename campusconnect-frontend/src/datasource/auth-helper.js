@@ -8,12 +8,10 @@ const authenticate = (token, cb) => {
             let payload = jwtDecode(token);
             sessionStorage.setItem("username", payload.username);
             sessionStorage.setItem("userId", payload.id);
-            sessionStorage.setItem("userEmail", payload.email);
         } catch (error) {
             console.error('Error decoding token:', error);
         }
     }
-    // Check if cb is a function before calling it
     if (cb && typeof cb === 'function') {
         cb();
     }
@@ -38,7 +36,6 @@ const clearJWT = () => {
         sessionStorage.removeItem("token");
         sessionStorage.removeItem("username");
         sessionStorage.removeItem("userId");
-        sessionStorage.removeItem("userEmail");
     }   
 }
 
