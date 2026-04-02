@@ -3,7 +3,7 @@ import { authenticate, clearJWT } from './auth-helper';
 
 const register = async (userData) => {
     try {
-        const response = await api.post('/auth/register', userData);
+        const response = await api.post('/api/auth/register', userData);
         console.log('Register response:', response);
         
         if (response.success) {
@@ -23,7 +23,7 @@ const register = async (userData) => {
 
 const signin = async (credentials) => {
     try {
-        const response = await api.post('/auth/login', credentials);
+        const response = await api.post('/api/auth/login', credentials);
         console.log('Login response:', response);
         
         if (response.token) {

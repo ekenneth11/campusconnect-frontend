@@ -37,7 +37,7 @@ function SignIn() {
         try {
             console.log('Attempting login with:', { email: formData.email });
             const response = await userApi.signin({
-                email: formData.email,
+                username: formData.email,
                 password: formData.password
             });
             

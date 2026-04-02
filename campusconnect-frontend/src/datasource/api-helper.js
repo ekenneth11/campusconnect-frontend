@@ -1,6 +1,6 @@
 import { getToken } from './auth-helper';
 
-const API_BASE_URL = 'https://campusconnect-backend-8tq2.onrender.com';
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'https://campusconnect-backend-8tq2.onrender.com').replace(/\/$/, '');
 
 const handleResponse = async (response) => {
     if (!response.ok) {

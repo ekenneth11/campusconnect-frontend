@@ -5,6 +5,7 @@ import Register from "./components/auth/Register";
 import Dashboard from "./components/Dashboard";
 import TestAPI from "./components/TestAPI";
 import Home from "./components/Home";
+import PostDetails from "./components/PostDetails";
 
 function MainRouter() {
     return (
@@ -15,6 +16,7 @@ function MainRouter() {
             {/* <Route path="/test-api" element={<TestAPI />} /> */}
             <Route element={<PrivateRoute />}>
                 <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/posts/:postId" element={<PostDetails />} />
             </Route>
         </Routes>
     );
