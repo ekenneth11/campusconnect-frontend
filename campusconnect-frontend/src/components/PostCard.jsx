@@ -1,8 +1,10 @@
 
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-function PostCard({ post }) {
+function PostCard({ post, actionItems = [] }) {
     const navigate = useNavigate();
+    const [showMenu, setShowMenu] = useState(false);
 
     const displayName = post?.author?.firstName
         ? `${post.author.firstName} ${post.author.lastName || ''}`.trim()
@@ -32,6 +34,42 @@ function PostCard({ post }) {
                 }
             }}
         >
+            {actionItems.length > 0 && (
+                <div className="flex justify-end">
+                    <div className="relative">
+                        <button
+                            type="button"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setShowMenu((prev) => !prev);
+                            }}
+                            className="rounded-md px-2 py-1 text-lg font-bold leading-none text-gray-600 hover:bg-gray-100"
+                            aria-label="Post actions"
+                        >
+                            ...
+                        </button>
+                        {showMenu && (
+                            <div className="absolute right-0 z-10 mt-1 min-w-[130px] rounded-md border border-gray-200 bg-white py-1 shadow-md">
+                                {actionItems.map((item) => (
+                                    <button
+                                        key={item.label}
+                                        type="button"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setShowMenu(false);
+                                            item.onClick?.();
+                                        }}
+                                        className={`block w-full px-3 py-2 text-left text-sm hover:bg-gray-100 ${item.danger ? 'text-red-700 hover:bg-red-50' : 'text-gray-700'}`}
+                                    >
+                                        {item.label}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
+
             <div className="flex items-center gap-3">
                 <div className="flex h-11 w-11 items-center justify-center rounded-full bg-blue-600 text-base font-semibold text-white">
                     {(displayName?.[0] || 'P').toUpperCase()}

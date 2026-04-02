@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { isAuthenticated, getCurrentUser } from '../datasource/auth-helper';
 import userApi from '../datasource/api-user';
 import postApi from '../datasource/api-post';
+import commentApi from '../datasource/api-comment';
+import rsvpApi from '../datasource/api-rsvp';
 import postModel from '../datasource/postModel';
 import PostForm from './PostForm';
 import PostCard from './PostCard';
@@ -14,6 +16,60 @@ function Dashboard() {
     const [error, setError] = useState('');
     const [currentPost, setCurrentPost] = useState(new postModel());
     const [showPostModal, setShowPostModal] = useState(false);
+    const [hiddenPostIds, setHiddenPostIds] = useState([]);
+
+    const currentUser = getCurrentUser();
+    const currentUserId = currentUser?._id || currentUser?.id || currentUser?.userId;
+
+    const normalizeList = (response, keys = []) => {
+        if (Array.isArray(response)) return response;
+        if (Array.isArray(response?.data)) return response.data;
+        for (const key of keys) {
+            if (Array.isArray(response?.[key])) return response[key];
+        }
+        return [];
+    };
+
+    const loadPostsWithCounts = async ({ showError = false } = {}) => {
+        try {
+            const postsData = await postApi.getAllPosts();
+            const postList = postsData?.data || [];
+
+            const enrichedPosts = await Promise.all(
+                postList.map(async (post) => {
+                    if (!post?._id) {
+                        return post;
+                    }
+
+                    const [commentsResult, rsvpResult] = await Promise.all([
+                        commentApi.getCommentsByPost(post._id).catch(() => null),
+                        post.category === 'event'
+                            ? rsvpApi.getRSVPsByEvent(post._id).catch(() => null)
+                            : Promise.resolve(null),
+                    ]);
+
+                    const comments = normalizeList(commentsResult, ['comments']);
+                    const rsvps = normalizeList(rsvpResult, ['rsvps']);
+
+                    return {
+                        ...post,
+                        commentCount: comments.length,
+                        rsvpCount: post.category === 'event' ? rsvps.length : 0,
+                    };
+                })
+            );
+
+            setPosts(enrichedPosts);
+            if (showError) {
+                setError('');
+            }
+        } catch (postsError) {
+            console.error('Posts fetch error:', postsError);
+            if (showError) {
+                setError('Failed to load posts. Please try refreshing the page.');
+            }
+        }
+    };
 
     useEffect(() => {
         const fetchData = async () => {
@@ -58,15 +114,7 @@ function Dashboard() {
                     }
                 }
 
-                // Fetch posts
-                try {
-                    const postsData = await postApi.getAllPosts();
-                    setPosts(postsData.data || []);
-                    console.log('Posts loaded:', postsData);
-                } catch (postsError) {
-                    console.error('Posts fetch error:', postsError);
-                    setPosts([]);
-                }
+                await loadPostsWithCounts({ showError: true });
 
             } catch (error) {
                 console.error('Error fetching dashboard data:', error);
@@ -78,6 +126,32 @@ function Dashboard() {
 
         fetchData();
     }, [navigate]);
+
+    useEffect(() => {
+        if (!isAuthenticated()) {
+            return;
+        }
+
+        const refreshCounts = () => {
+            loadPostsWithCounts();
+        };
+
+        const onVisibilityChange = () => {
+            if (!document.hidden) {
+                refreshCounts();
+            }
+        };
+
+        const intervalId = window.setInterval(refreshCounts, 10000);
+        window.addEventListener('focus', refreshCounts);
+        document.addEventListener('visibilitychange', onVisibilityChange);
+
+        return () => {
+            window.clearInterval(intervalId);
+            window.removeEventListener('focus', refreshCounts);
+            document.removeEventListener('visibilitychange', onVisibilityChange);
+        };
+    }, []);
 
     const handleLogout = async () => {
         await userApi.signout();
@@ -97,6 +171,35 @@ function Dashboard() {
         setCurrentPost(new postModel());
     };
 
+    const toDateInputValue = (value) => {
+        if (!value) return '';
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) return '';
+        return date.toISOString().slice(0, 10);
+    };
+
+    const handleEditPost = (post) => {
+        setCurrentPost({
+            ...post,
+            eventDate: toDateInputValue(post?.eventDate),
+        });
+        setShowPostModal(true);
+    };
+
+    const handleDeletePost = async (postId) => {
+        try {
+            await postApi.deletePost(postId);
+            setPosts((prev) => prev.filter((post) => post._id !== postId));
+        } catch (deleteError) {
+            console.error('Error deleting post:', deleteError);
+            setError(deleteError.message || 'Failed to delete post.');
+        }
+    };
+
+    const handleHidePost = (postId) => {
+        setHiddenPostIds((prev) => (prev.includes(postId) ? prev : [...prev, postId]));
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
@@ -111,10 +214,13 @@ function Dashboard() {
                 author: user?._id
             };
 
-            await postApi.createPost(payload);
+            if (currentPost._id) {
+                await postApi.updatePost(currentPost._id, payload);
+            } else {
+                await postApi.createPost(payload);
+            }
 
-            const postsData = await postApi.getAllPosts();
-            setPosts(postsData.data || []);
+            await loadPostsWithCounts({ showError: true });
             setShowPostModal(false);
             setCurrentPost(new postModel());
         } catch (submitError) {
@@ -130,6 +236,8 @@ function Dashboard() {
             </div>
         );
     }
+
+    const visiblePosts = posts.filter((post) => !hiddenPostIds.includes(post._id));
 
     return (
         <div className="min-h-screen bg-gray-100">
@@ -189,11 +297,24 @@ function Dashboard() {
                     {/* Posts Section */}
                     <div className="bg-white rounded-lg shadow-md p-6 lg:col-span-2">
                         <h2 className="text-xl font-semibold mb-4 text-gray-800">Recent Posts</h2>
-                        {posts.length > 0 ? (
+                        {visiblePosts.length > 0 ? (
                             <div className="space-y-5">
-                                {posts.map((post) => (
-                                    <PostCard key={post._id} post={post} />
-                                ))}
+                                {visiblePosts.map((post) => {
+                                    const postAuthorId = post?.author?._id || post?.author?.id || post?.authorId;
+                                    const isOwnPost = postAuthorId === currentUserId;
+                                    const actionItems = isOwnPost
+                                        ? [
+                                            { label: 'Edit', onClick: () => handleEditPost(post) },
+                                            { label: 'Delete', danger: true, onClick: () => handleDeletePost(post._id) },
+                                        ]
+                                        : [
+                                            { label: 'Hide', onClick: () => handleHidePost(post._id) },
+                                        ];
+
+                                    return (
+                                        <PostCard key={post._id} post={post} actionItems={actionItems} />
+                                    );
+                                })}
                             </div>
                         ) : (
                             <p className="text-gray-500 text-center py-8">No posts available.</p>

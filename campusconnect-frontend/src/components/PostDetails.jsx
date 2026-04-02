@@ -19,6 +19,9 @@ function PostDetails() {
     const [rsvps, setRsvps] = useState([]);
     const [rsvpSubmitting, setRsvpSubmitting] = useState(false);
     const [actionError, setActionError] = useState('');
+    const [openCommentMenuId, setOpenCommentMenuId] = useState(null);
+    const [editingCommentId, setEditingCommentId] = useState(null);
+    const [editingCommentText, setEditingCommentText] = useState('');
 
     const currentUser = getCurrentUser();
     const currentUserId = currentUser?._id || currentUser?.id || currentUser?.userId;
@@ -123,12 +126,56 @@ function PostDetails() {
     };
 
     const handleDeleteComment = async (commentId) => {
+        setOpenCommentMenuId(null);
         try {
             await commentApi.deleteComment(postId, commentId);
             setComments((prev) => prev.filter((comment) => comment._id !== commentId));
         } catch (deleteError) {
             console.error('Failed to delete comment:', deleteError);
             setActionError(deleteError.message || 'Failed to delete comment.');
+        }
+    };
+
+    const handleStartEditComment = (comment) => {
+        setOpenCommentMenuId(null);
+        setEditingCommentId(comment._id);
+        setEditingCommentText(comment.text || '');
+        setActionError('');
+    };
+
+    const handleCancelEditComment = () => {
+        setEditingCommentId(null);
+        setEditingCommentText('');
+    };
+
+    const handleSaveEditComment = async (commentId) => {
+        const trimmed = editingCommentText.trim();
+        if (!trimmed) {
+            setActionError('Comment cannot be empty.');
+            return;
+        }
+
+        try {
+            const updated = await commentApi.updateComment(postId, commentId, { text: trimmed });
+            const updatedComment = updated?.comment || updated?.data || updated;
+
+            setComments((prev) =>
+                prev.map((comment) =>
+                    comment._id === commentId
+                        ? {
+                            ...comment,
+                            ...(updatedComment?._id ? updatedComment : {}),
+                            text: updatedComment?.text || trimmed,
+                        }
+                        : comment
+                )
+            );
+
+            setEditingCommentId(null);
+            setEditingCommentText('');
+        } catch (editError) {
+            console.error('Failed to update comment:', editError);
+            setActionError(editError.message || 'Failed to update comment.');
         }
     };
 
@@ -190,6 +237,15 @@ function PostDetails() {
     const authorRole = post?.author?.role || post?.authorRole || 'Member';
     const rsvpCount = rsvps.length || post?.rsvpCount || post?.rsvps?.length || 0;
     const commentCount = comments.length || post?.commentCount || post?.comments?.length || 0;
+    const postAuthorId = getEntityId(post?.author) || post?.authorId;
+    const isPostOwnerById = Boolean(postAuthorId && currentUserId && postAuthorId === currentUserId);
+    const isPostOwnerByUsername = Boolean(
+        post?.author?.username && currentUser?.username && post.author.username === currentUser.username
+    );
+    const isPostOwnerByEmail = Boolean(
+        post?.author?.email && currentUser?.email && post.author.email === currentUser.email
+    );
+    const isPostOwner = isPostOwnerById || isPostOwnerByUsername || isPostOwnerByEmail;
 
     return (
         <div className="min-h-screen bg-gray-100 px-4 py-8">
@@ -230,32 +286,34 @@ function PostDetails() {
                         <span>{commentCount} Comments</span>
                     </div>
 
-                    <div className="mt-6 flex flex-wrap gap-2">
-                        <button
-                            type="button"
-                            onClick={() => handleRsvp('going')}
-                            disabled={rsvpSubmitting}
-                            className={`rounded-lg px-3 py-2 text-sm font-semibold ${userRsvp?.status === 'going' ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}`}
-                        >
-                            {goingCount} Going
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => handleRsvp('interested')}
-                            disabled={rsvpSubmitting}
-                            className={`rounded-lg px-3 py-2 text-sm font-semibold ${userRsvp?.status === 'interested' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}`}
-                        >
-                            {interestedCount} Interested
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => handleRsvp('not going')}
-                            disabled={rsvpSubmitting}
-                            className={`rounded-lg px-3 py-2 text-sm font-semibold ${userRsvp?.status === 'not going' ? 'bg-red-600 text-white' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}`}
-                        >
-                            {notGoingCount} Not Going
-                        </button>
-                    </div>
+                    {post?.category === 'event' && (
+                        <div className="mt-6 flex flex-wrap gap-2">
+                            <button
+                                type="button"
+                                onClick={() => handleRsvp('going')}
+                                disabled={rsvpSubmitting}
+                                className={`rounded-lg px-3 py-2 text-sm font-semibold ${userRsvp?.status === 'going' ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}`}
+                            >
+                                {goingCount} Going
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => handleRsvp('interested')}
+                                disabled={rsvpSubmitting}
+                                className={`rounded-lg px-3 py-2 text-sm font-semibold ${userRsvp?.status === 'interested' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}`}
+                            >
+                                {interestedCount} Interested
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => handleRsvp('not going')}
+                                disabled={rsvpSubmitting}
+                                className={`rounded-lg px-3 py-2 text-sm font-semibold ${userRsvp?.status === 'not going' ? 'bg-red-600 text-white' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}`}
+                            >
+                                {notGoingCount} Not Going
+                            </button>
+                        </div>
+                    )}
                     {actionError && (
                         <p className="mt-3 text-sm text-red-600">{actionError}</p>
                     )}
@@ -287,7 +345,10 @@ function PostDetails() {
                         <div className="space-y-3">
                             {comments.map((comment) => {
                                 const commentAuthorId = getEntityId(comment?.author);
-                                const canDelete = commentAuthorId === currentUserId || currentUserRole === 'admin';
+                                const isCommentOwner = commentAuthorId === currentUserId;
+                                const canEdit = isCommentOwner;
+                                const canDelete = isCommentOwner || isPostOwner || currentUserRole === 'admin';
+                                const canShowMenu = canEdit || canDelete;
                                 const commentAuthorName = comment?.author?.firstName
                                     ? `${comment.author.firstName} ${comment.author.lastName || ''}`.trim()
                                     : comment?.authorName || 'User';
@@ -297,16 +358,68 @@ function PostDetails() {
                                         <div className="flex items-start justify-between gap-2">
                                             <div>
                                                 <p className="mb-1 text-sm font-semibold text-gray-700">{commentAuthorName}</p>
-                                                <p className="mb-0 text-gray-700">{comment.text}</p>
+                                                {editingCommentId === comment._id ? (
+                                                    <div className="space-y-2">
+                                                        <textarea
+                                                            value={editingCommentText}
+                                                            onChange={(e) => setEditingCommentText(e.target.value)}
+                                                            rows={3}
+                                                            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-800 outline-none focus:border-blue-500"
+                                                        />
+                                                        <div className="flex gap-2">
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => handleSaveEditComment(comment._id)}
+                                                                className="rounded-md bg-blue-600 px-2 py-1 text-xs font-semibold text-white hover:bg-blue-700"
+                                                            >
+                                                                Save
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                onClick={handleCancelEditComment}
+                                                                className="rounded-md bg-gray-200 px-2 py-1 text-xs font-semibold text-gray-700 hover:bg-gray-300"
+                                                            >
+                                                                Cancel
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    <p className="mb-0 text-gray-700">{comment.text}</p>
+                                                )}
                                             </div>
-                                            {canDelete && (
-                                                <button
-                                                    type="button"
-                                                    onClick={() => handleDeleteComment(comment._id)}
-                                                    className="rounded-md bg-red-100 px-2 py-1 text-xs font-semibold text-red-700 hover:bg-red-200"
-                                                >
-                                                    Delete
-                                                </button>
+                                            {canShowMenu && (
+                                                <div className="relative">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setOpenCommentMenuId((prev) => (prev === comment._id ? null : comment._id))}
+                                                        className="rounded-md px-2 py-1 text-lg font-bold leading-none text-gray-600 hover:bg-gray-100"
+                                                        aria-label="Comment actions"
+                                                    >
+                                                        ...
+                                                    </button>
+                                                    {openCommentMenuId === comment._id && (
+                                                        <div className="absolute right-0 z-10 mt-1 min-w-[120px] rounded-md border border-gray-200 bg-white py-1 shadow-md">
+                                                            {canEdit && (
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => handleStartEditComment(comment)}
+                                                                    className="block w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-100"
+                                                                >
+                                                                    Edit
+                                                                </button>
+                                                            )}
+                                                            {canDelete && (
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => handleDeleteComment(comment._id)}
+                                                                    className="block w-full px-3 py-2 text-left text-sm text-red-700 hover:bg-red-50"
+                                                                >
+                                                                    Delete
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                    )}
+                                                </div>
                                             )}
                                         </div>
                                     </div>
