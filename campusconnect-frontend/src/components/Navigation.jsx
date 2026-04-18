@@ -1,10 +1,11 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { isAuthenticated } from '../datasource/auth-helper';
+import { isAdmin, isAuthenticated } from '../datasource/auth-helper';
 import userApi from '../datasource/api-user';
 
 function Navigation() {
     const navigate = useNavigate();
     const authenticated = isAuthenticated();
+    const admin = isAdmin();
 
     const handleLogout = async () => {
         await userApi.signout();
@@ -18,6 +19,9 @@ function Navigation() {
                     <Link to="/" className="hover:text-gray-300">Home</Link>
                     {authenticated && (
                         <Link to="/dashboard" className="hover:text-gray-300">Dashboard</Link>
+                    )}
+                    {authenticated && admin && (
+                        <Link to="/activities" className="hover:text-gray-300">Activities</Link>
                     )}
                     <Link to="/test-api" className="hover:text-gray-300">Test API</Link>
                 </div>

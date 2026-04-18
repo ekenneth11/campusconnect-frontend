@@ -1,11 +1,13 @@
-import { Route, Routes, Navigate } from "react-router-dom";
+import { Route, Routes } from "react-router-dom";
 import PrivateRoute from "./components/auth/PrivateRoute";
+import AdminRoute from "./components/auth/AdminRoute";
 import SignIn from "./components/auth/SignIn";
 import Register from "./components/auth/Register";
 import Dashboard from "./components/Dashboard";
 import TestAPI from "./components/TestAPI";
 import Home from "./components/Home";
 import PostDetails from "./components/PostDetails";
+import Activities from "./components/Activities";
 
 function MainRouter() {
     return (
@@ -17,6 +19,9 @@ function MainRouter() {
             <Route element={<PrivateRoute />}>
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/posts/:postId" element={<PostDetails />} />
+            </Route>
+            <Route element={<AdminRoute />}>
+                <Route path="/activities" element={<Activities />} />
             </Route>
         </Routes>
     );

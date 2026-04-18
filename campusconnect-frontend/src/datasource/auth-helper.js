@@ -50,4 +50,9 @@ const getCurrentUser = () => {
     }
 }
 
-export { authenticate, getToken, isAuthenticated, clearJWT, getCurrentUser };
+const isAdmin = () => {
+    const user = getCurrentUser();
+    return user?.role?.toLowerCase() === 'admin';
+}
+
+export { authenticate, getToken, isAuthenticated, clearJWT, getCurrentUser, isAdmin };
