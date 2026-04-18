@@ -22,6 +22,7 @@ function PostDetails() {
     const [openCommentMenuId, setOpenCommentMenuId] = useState(null);
     const [editingCommentId, setEditingCommentId] = useState(null);
     const [editingCommentText, setEditingCommentText] = useState('');
+    const returnPath = location.state?.from || '/dashboard';
 
     const currentUser = getCurrentUser();
     const currentUserId = currentUser?._id || currentUser?.id || currentUser?.userId;
@@ -205,9 +206,9 @@ function PostDetails() {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-gray-100 px-4 py-8">
-                <div className="mx-auto max-w-4xl rounded-xl bg-white p-6 shadow-md">
-                    <p className="text-gray-600">Loading post details...</p>
+            <div className="min-h-screen bg-black px-4 py-8 text-white">
+                <div className="mx-auto max-w-4xl rounded-xl border border-gray-800 bg-black p-6 shadow-md">
+                    <p className="text-gray-300">Loading post details...</p>
                 </div>
             </div>
         );
@@ -215,15 +216,15 @@ function PostDetails() {
 
     if (error) {
         return (
-            <div className="min-h-screen bg-gray-100 px-4 py-8">
-                <div className="mx-auto max-w-4xl rounded-xl bg-white p-6 shadow-md">
-                    <p className="text-red-600">{error}</p>
+            <div className="min-h-screen bg-black px-4 py-8 text-white">
+                <div className="mx-auto max-w-4xl rounded-xl border border-gray-800 bg-black p-6 shadow-md">
+                    <p className="text-red-400">{error}</p>
                     <button
                         type="button"
-                        onClick={() => navigate('/dashboard')}
-                        className="mt-4 rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+                        onClick={() => navigate(returnPath)}
+                        className="mt-4 rounded-lg bg-gray-100 px-4 py-2 text-gray-900 hover:bg-white"
                     >
-                        Back to Dashboard
+                        Back
                     </button>
                 </div>
             </div>
@@ -233,6 +234,11 @@ function PostDetails() {
     const authorName = post?.author?.firstName
         ? `${post.author.firstName} ${post.author.lastName || ''}`.trim()
         : post?.authorName || 'Unknown user';
+    const authorHandle = post?.author?.username
+        ? `@${post.author.username}`
+        : post?.authorName
+            ? `@${String(post.authorName).replace(/\s+/g, '').toLowerCase()}`
+            : '@user';
 
     const authorRole = post?.author?.role || post?.authorRole || 'Member';
     const rsvpCount = rsvps.length || post?.rsvpCount || post?.rsvps?.length || 0;
@@ -248,40 +254,44 @@ function PostDetails() {
     const isPostOwner = isPostOwnerById || isPostOwnerByUsername || isPostOwnerByEmail;
 
     return (
-        <div className="min-h-screen bg-gray-100 px-4 py-8">
+        <div className="min-h-screen bg-black px-4 py-8 text-white">
             <div className="mx-auto max-w-4xl space-y-4">
-                <button
-                    type="button"
-                    onClick={() => navigate('/dashboard')}
-                    className="rounded-lg bg-gray-800 px-4 py-2 text-white hover:bg-gray-900"
-                >
-                    Back
-                </button>
+                <article className="rounded-2xl border border-gray-800 bg-black p-6 shadow-sm">
+                    <div className="mb-5 flex items-center gap-4 px-1 text-white">
+                        <button
+                            type="button"
+                            onClick={() => navigate(returnPath)}
+                            className="flex h-9 w-9 items-center justify-center rounded-full text-2xl text-white"
+                            aria-label="Go back"
+                        >
+                            <i className="bi bi-arrow-left" aria-hidden="true" />
+                        </button>
+                        <h1 className="m-0 text-2xl font-bold">Post</h1>
+                    </div>
 
-                <article className="rounded-xl border border-gray-300 bg-white p-6 shadow-sm">
                     <div className="flex items-center gap-3">
                         <div className="flex h-11 w-11 items-center justify-center rounded-full bg-blue-600 text-base font-semibold text-white">
                             {(authorName?.[0] || 'U').toUpperCase()}
                         </div>
                         <div>
-                            <p className="mb-0 text-xl font-semibold text-gray-700">{authorName}</p>
-                            <p className="mb-0 text-base text-gray-400">{authorRole}</p>
+                            <p className="mb-0 text-xl font-semibold text-white">{authorName}</p>
+                            <p className="mb-0 text-base text-gray-400">{authorHandle}</p>
                         </div>
                     </div>
 
                     <div className="mt-4 space-y-3">
-                        <h1 className="text-3xl font-bold text-gray-800">{post?.title || 'Untitled post'}</h1>
-                        <p className="text-lg text-gray-700">{post?.content || 'No description provided.'}</p>
+                        <h1 className="text-4xl font-bold text-white">{post?.title || 'Untitled post'}</h1>
+                        <p className="text-3xl leading-relaxed text-gray-100">{post?.content || 'No description provided.'}</p>
                     </div>
 
-                    <div className="mt-6 grid grid-cols-1 gap-3 text-sm text-gray-600 sm:grid-cols-2">
-                        <p><strong>Category:</strong> {post?.category || 'N/A'}</p>
-                        <p><strong>Status:</strong> {post?.status || 'N/A'}</p>
-                        <p><strong>Location:</strong> {post?.location || 'N/A'}</p>
-                        <p><strong>Event Date:</strong> {post?.eventDate ? new Date(post.eventDate).toLocaleDateString() : 'N/A'}</p>
+                    <div className="mt-6 grid grid-cols-1 gap-3 text-sm text-gray-400 sm:grid-cols-2">
+                        <p><strong className="text-gray-300">Category:</strong> {post?.category || 'N/A'}</p>
+                        <p><strong className="text-gray-300">Status:</strong> {post?.status || 'N/A'}</p>
+                        <p><strong className="text-gray-300">Location:</strong> {post?.location || 'N/A'}</p>
+                        <p><strong className="text-gray-300">Event Date:</strong> {post?.eventDate ? new Date(post.eventDate).toLocaleDateString() : 'N/A'}</p>
                     </div>
 
-                    <div className="mt-8 flex gap-8 text-base font-semibold text-gray-700">
+                    <div className="mt-8 flex gap-8 text-base font-semibold text-gray-300">
                         <span>{rsvpCount} RSVP</span>
                         <span>{commentCount} Comments</span>
                     </div>
@@ -292,7 +302,7 @@ function PostDetails() {
                                 type="button"
                                 onClick={() => handleRsvp('going')}
                                 disabled={rsvpSubmitting}
-                                className={`rounded-lg px-3 py-2 text-sm font-semibold ${userRsvp?.status === 'going' ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}`}
+                                className={`rounded-lg px-3 py-2 text-sm font-semibold ${userRsvp?.status === 'going' ? 'bg-green-600 text-white' : 'bg-gray-800 text-gray-100 hover:bg-gray-700'}`}
                             >
                                 {goingCount} Going
                             </button>
@@ -300,7 +310,7 @@ function PostDetails() {
                                 type="button"
                                 onClick={() => handleRsvp('interested')}
                                 disabled={rsvpSubmitting}
-                                className={`rounded-lg px-3 py-2 text-sm font-semibold ${userRsvp?.status === 'interested' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}`}
+                                className={`rounded-lg px-3 py-2 text-sm font-semibold ${userRsvp?.status === 'interested' ? 'bg-blue-600 text-white' : 'bg-gray-800 text-gray-100 hover:bg-gray-700'}`}
                             >
                                 {interestedCount} Interested
                             </button>
@@ -308,19 +318,19 @@ function PostDetails() {
                                 type="button"
                                 onClick={() => handleRsvp('not going')}
                                 disabled={rsvpSubmitting}
-                                className={`rounded-lg px-3 py-2 text-sm font-semibold ${userRsvp?.status === 'not going' ? 'bg-red-600 text-white' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}`}
+                                className={`rounded-lg px-3 py-2 text-sm font-semibold ${userRsvp?.status === 'not going' ? 'bg-red-600 text-white' : 'bg-gray-800 text-gray-100 hover:bg-gray-700'}`}
                             >
                                 {notGoingCount} Not Going
                             </button>
                         </div>
                     )}
                     {actionError && (
-                        <p className="mt-3 text-sm text-red-600">{actionError}</p>
+                        <p className="mt-3 text-sm text-red-400">{actionError}</p>
                     )}
                 </article>
 
-                <section className="rounded-xl border border-gray-300 bg-white p-6 shadow-sm">
-                    <h2 className="mb-4 text-2xl font-semibold text-gray-800">Comments</h2>
+                <section className="rounded-xl border border-gray-800 bg-black p-6 shadow-sm">
+                    <h2 className="mb-4 text-2xl font-semibold text-white">Comments</h2>
 
                     <form onSubmit={handleAddComment} className="mb-5 flex gap-3">
                         <input
@@ -328,7 +338,7 @@ function PostDetails() {
                             value={newComment}
                             onChange={(e) => setNewComment(e.target.value)}
                             placeholder="Add comment..."
-                            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-800 outline-none focus:border-blue-500"
+                            className="w-full rounded-lg border border-gray-700 bg-black px-3 py-2 text-gray-100 outline-none focus:border-blue-500"
                         />
                         <button
                             type="submit"
@@ -340,7 +350,7 @@ function PostDetails() {
                     </form>
 
                     {comments.length === 0 ? (
-                        <p className="text-gray-500">No comments yet.</p>
+                        <p className="text-gray-400">No comments yet.</p>
                     ) : (
                         <div className="space-y-3">
                             {comments.map((comment) => {
@@ -354,17 +364,17 @@ function PostDetails() {
                                     : comment?.authorName || 'User';
 
                                 return (
-                                    <div key={comment._id} className="rounded-lg border border-gray-200 p-3">
+                                    <div key={comment._id} className="rounded-lg border border-gray-800 bg-black p-3">
                                         <div className="flex items-start justify-between gap-2">
                                             <div>
-                                                <p className="mb-1 text-sm font-semibold text-gray-700">{commentAuthorName}</p>
+                                                <p className="mb-1 text-sm font-semibold text-gray-200">{commentAuthorName}</p>
                                                 {editingCommentId === comment._id ? (
                                                     <div className="space-y-2">
                                                         <textarea
                                                             value={editingCommentText}
                                                             onChange={(e) => setEditingCommentText(e.target.value)}
                                                             rows={3}
-                                                            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-800 outline-none focus:border-blue-500"
+                                                            className="w-full rounded-md border border-gray-700 bg-black px-3 py-2 text-sm text-gray-100 outline-none focus:border-blue-500"
                                                         />
                                                         <div className="flex gap-2">
                                                             <button
@@ -377,14 +387,14 @@ function PostDetails() {
                                                             <button
                                                                 type="button"
                                                                 onClick={handleCancelEditComment}
-                                                                className="rounded-md bg-gray-200 px-2 py-1 text-xs font-semibold text-gray-700 hover:bg-gray-300"
+                                                                className="rounded-md bg-gray-800 px-2 py-1 text-xs font-semibold text-gray-200 hover:bg-gray-700"
                                                             >
                                                                 Cancel
                                                             </button>
                                                         </div>
                                                     </div>
                                                 ) : (
-                                                    <p className="mb-0 text-gray-700">{comment.text}</p>
+                                                    <p className="mb-0 text-gray-300">{comment.text}</p>
                                                 )}
                                             </div>
                                             {canShowMenu && (
@@ -392,18 +402,18 @@ function PostDetails() {
                                                     <button
                                                         type="button"
                                                         onClick={() => setOpenCommentMenuId((prev) => (prev === comment._id ? null : comment._id))}
-                                                        className="rounded-md px-2 py-1 text-lg font-bold leading-none text-gray-600 hover:bg-gray-100"
+                                                        className="rounded-md px-2 py-1 text-lg font-bold leading-none text-gray-400 hover:bg-gray-800"
                                                         aria-label="Comment actions"
                                                     >
                                                         ...
                                                     </button>
                                                     {openCommentMenuId === comment._id && (
-                                                        <div className="absolute right-0 z-10 mt-1 min-w-[120px] rounded-md border border-gray-200 bg-white py-1 shadow-md">
+                                                        <div className="absolute right-0 z-10 mt-1 min-w-[120px] rounded-md border border-gray-700 bg-black py-1 shadow-md">
                                                             {canEdit && (
                                                                 <button
                                                                     type="button"
                                                                     onClick={() => handleStartEditComment(comment)}
-                                                                    className="block w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-100"
+                                                                    className="block w-full px-3 py-2 text-left text-sm text-gray-200 hover:bg-gray-800"
                                                                 >
                                                                     Edit
                                                                 </button>

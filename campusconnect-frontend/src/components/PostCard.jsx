@@ -1,10 +1,11 @@
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-function PostCard({ post, actionItems = [] }) {
+function PostCard({ post, actionItems = [], detailsState = {} }) {
     const navigate = useNavigate();
     const [showMenu, setShowMenu] = useState(false);
+    const menuRef = useRef(null);
 
     const displayName = post?.author?.firstName
         ? `${post.author.firstName} ${post.author.lastName || ''}`.trim()
@@ -18,12 +19,32 @@ function PostCard({ post, actionItems = [] }) {
         if (!post?._id) {
             return;
         }
-        navigate(`/posts/${post._id}`, { state: { post } });
+        navigate(`/posts/${post._id}`, { state: { post, ...detailsState } });
     };
+
+    useEffect(() => {
+        const handleOutsideClick = (event) => {
+            if (!showMenu) {
+                return;
+            }
+
+            if (menuRef.current && !menuRef.current.contains(event.target)) {
+                setShowMenu(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleOutsideClick);
+        document.addEventListener('touchstart', handleOutsideClick);
+
+        return () => {
+            document.removeEventListener('mousedown', handleOutsideClick);
+            document.removeEventListener('touchstart', handleOutsideClick);
+        };
+    }, [showMenu]);
 
     return (
         <article
-            className="cursor-pointer rounded-xl border border-gray-300 bg-white px-6 py-5 shadow-sm transition hover:shadow-md"
+            className="post-card relative cursor-pointer rounded-xl border border-gray-300 bg-white px-4 py-4 shadow-sm transition hover:shadow-md"
             onClick={handleOpenDetails}
             role="button"
             tabIndex={0}
@@ -35,8 +56,8 @@ function PostCard({ post, actionItems = [] }) {
             }}
         >
             {actionItems.length > 0 && (
-                <div className="flex justify-end">
-                    <div className="relative">
+                <div className="absolute right-3 top-3">
+                    <div ref={menuRef} className="relative">
                         <button
                             type="button"
                             onClick={(e) => {
@@ -49,7 +70,7 @@ function PostCard({ post, actionItems = [] }) {
                             ...
                         </button>
                         {showMenu && (
-                            <div className="absolute right-0 z-10 mt-1 min-w-[130px] rounded-md border border-gray-200 bg-white py-1 shadow-md">
+                            <div className="post-card-menu absolute right-0 z-10 mt-1 min-w-[130px] rounded-md py-1 shadow-md">
                                 {actionItems.map((item) => (
                                     <button
                                         key={item.label}
@@ -59,7 +80,7 @@ function PostCard({ post, actionItems = [] }) {
                                             setShowMenu(false);
                                             item.onClick?.();
                                         }}
-                                        className={`block w-full px-3 py-2 text-left text-sm hover:bg-gray-100 ${item.danger ? 'text-red-700 hover:bg-red-50' : 'text-gray-700'}`}
+                                        className={`post-card-menu-item block w-full px-3 py-2 text-left text-sm ${item.danger ? 'post-card-menu-item-danger' : ''}`}
                                     >
                                         {item.label}
                                     </button>
@@ -71,21 +92,22 @@ function PostCard({ post, actionItems = [] }) {
             )}
 
             <div className="flex items-center gap-3">
-                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-blue-600 text-base font-semibold text-white">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-600 text-sm font-semibold text-white">
                     {(displayName?.[0] || 'P').toUpperCase()}
                 </div>
                 <div>
-                    <p className="mb-0 text-2xl font-semibold text-gray-700">{displayName}</p>
-                    <p className="mb-0 text-xl text-gray-400">{displayRole}</p>
+                    <p className="post-card-author mb-0 text-lg font-semibold">{displayName}</p>
+                    <p className="post-card-role mb-0 text-sm">{displayRole}</p>
                 </div>
             </div>
 
-            <div className="mt-3 pl-14">
-                <h3 className="mb-1 text-5xl font-bold text-gray-800">{post?.title || 'Text Heading'}</h3>
-                <p className="mb-0 text-4xl text-gray-700">{post?.content || 'Description'}</p>
+            <div className="mt-3 pl-12">
+                <p className="post-card-category mb-1 text-xs uppercase tracking-wide">{post?.category || 'General'}</p>
+                <h3 className="post-card-title mb-1 text-2xl font-bold">{post?.title || 'Text Heading'}</h3>
+                <p className="post-card-content mb-0 text-lg leading-relaxed">{post?.content || 'Description'}</p>
             </div>
 
-            <div className="mt-12 flex gap-12 pl-14 text-2xl text-gray-700">
+            <div className="post-card-meta mt-4 flex gap-6 pl-12 text-base">
                 <span>{rsvpCount} RSVP</span>
                 <span>{commentCount} Comments</span>
             </div>

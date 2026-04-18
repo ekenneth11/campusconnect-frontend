@@ -17,9 +17,9 @@ function PostForm({ showPostModal, handleHide, currentPost, setCurrentPost, hand
     return (
         <>
             {/* Post modal */}
-            <Modal show={showPostModal} onHide={handleHide} size="xl" scrollable centered>
-                <Modal.Header className="border-bottom-0 pb-2" closeButton>
-                    <Modal.Title className="w-100 text-center fs-2 fw-semibold">{title}</Modal.Title>
+            <Modal show={showPostModal} onHide={handleHide} size="xl" scrollable centered dialogClassName="post-form-modal">
+                <Modal.Header className="border-bottom-0 pb-2" closeButton closeVariant="white">
+                    <Modal.Title className="w-100 text-center fs-2 fw-semibold text-white">{title}</Modal.Title>
 
                 </Modal.Header>
                 <Modal.Body className="pt-0">
@@ -30,8 +30,8 @@ function PostForm({ showPostModal, handleHide, currentPost, setCurrentPost, hand
                                     {(user?.firstName?.[0] || 'U').toUpperCase()}
                                 </div>
                                 <div>
-                                    <p className="mb-0 fw-semibold fs-5">{user.firstName} {user.lastName}</p>
-                                    <p className="mb-0 text-secondary fs-4">{user.role}</p>
+                                    <p className="mb-0 fw-semibold fs-5 text-white">{user.firstName} {user.lastName}</p>
+                                    <p className="mb-0 text-gray-400 fs-4">{user.role}</p>
                                 </div>
                             </div>
 

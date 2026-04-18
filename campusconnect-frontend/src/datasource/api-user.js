@@ -1,5 +1,5 @@
 import api from './api-helper';
-import { authenticate, clearJWT } from './auth-helper';
+import { authenticate, clearJWT, getCurrentUser } from './auth-helper';
 
 const authBasePath = '/auth';
 
@@ -85,12 +85,43 @@ const getProfile = async () => {
     }
 };
 
+const updateProfile = async (profileData) => {
+    const currentUser = getCurrentUser();
+    const userId = currentUser?._id || currentUser?.id || currentUser?.userId;
+    const endpoints = [
+        '/api/users/me',
+        '/api/users/profile',
+        ...(userId ? [`/api/users/${userId}`] : []),
+    ];
+
+    let lastError = null;
+
+    for (const endpoint of endpoints) {
+        try {
+            const response = await api.put(endpoint, profileData);
+            const updatedUser = response?.user || response?.data || response;
+
+            if (updatedUser && typeof updatedUser === 'object') {
+                sessionStorage.setItem('user', JSON.stringify(updatedUser));
+            }
+
+            return response;
+        } catch (error) {
+            lastError = error;
+        }
+    }
+
+    console.error('Update profile error:', lastError);
+    throw lastError || new Error('Failed to update profile');
+};
+
 // Make sure we export default
 const userApi = {
     register,
     signin,
     signout,
-    getProfile
+    getProfile,
+    updateProfile
 };
 
 export default userApi;

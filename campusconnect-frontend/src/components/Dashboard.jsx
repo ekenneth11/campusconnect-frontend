@@ -1,15 +1,14 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { isAuthenticated, getCurrentUser } from '../datasource/auth-helper';
 import userApi from '../datasource/api-user';
 import postApi from '../datasource/api-post';
-import commentApi from '../datasource/api-comment';
-import rsvpApi from '../datasource/api-rsvp';
 import postModel from '../datasource/postModel';
 import PostForm from './PostForm';
 import PostCard from './PostCard';
 function Dashboard() {
     const navigate = useNavigate();
+    const location = useLocation();
     const [user, setUser] = useState(null);
     const [posts, setPosts] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -22,43 +21,21 @@ function Dashboard() {
     const currentUser = getCurrentUser();
     const currentUserId = currentUser?._id || currentUser?.id || currentUser?.userId;
 
-    const normalizeList = (response, keys = []) => {
-        if (Array.isArray(response)) return response;
-        if (Array.isArray(response?.data)) return response.data;
-        for (const key of keys) {
-            if (Array.isArray(response?.[key])) return response[key];
-        }
-        return [];
-    };
-
     const loadPostsWithCounts = async ({ showError = false } = {}) => {
         try {
             const postsData = await postApi.getAllPosts();
             const postList = postsData?.data || [];
 
-            const enrichedPosts = await Promise.all(
-                postList.map(async (post) => {
-                    if (!post?._id) {
-                        return post;
-                    }
+            const enrichedPosts = postList.map((post) => {
+                const commentCount = post?.commentCount ?? (Array.isArray(post?.comments) ? post.comments.length : 0);
+                const rsvpCount = post?.rsvpCount ?? (Array.isArray(post?.rsvps) ? post.rsvps.length : 0);
 
-                    const [commentsResult, rsvpResult] = await Promise.all([
-                        commentApi.getCommentsByPost(post._id).catch(() => null),
-                        post.category === 'event'
-                            ? rsvpApi.getRSVPsByEvent(post._id).catch(() => null)
-                            : Promise.resolve(null),
-                    ]);
-
-                    const comments = normalizeList(commentsResult, ['comments']);
-                    const rsvps = normalizeList(rsvpResult, ['rsvps']);
-
-                    return {
-                        ...post,
-                        commentCount: comments.length,
-                        rsvpCount: post.category === 'event' ? rsvps.length : 0,
-                    };
-                })
-            );
+                return {
+                    ...post,
+                    commentCount,
+                    rsvpCount: post?.category === 'event' ? rsvpCount : 0,
+                };
+            });
 
             setPosts(enrichedPosts);
             if (showError) {
@@ -154,6 +131,13 @@ function Dashboard() {
         };
     }, []);
 
+    useEffect(() => {
+        if (location.state?.openPostModal) {
+            setShowPostModal(true);
+            navigate('/dashboard', { replace: true, state: null });
+        }
+    }, [location.state, navigate]);
+
     const handleChange = (e) => {
         const { name, value } = e.target;
         setCurrentPost((prev) => ({
@@ -240,8 +224,8 @@ function Dashboard() {
         : visiblePosts.filter((post) => String(post?.category || '').toLowerCase() === selectedCategory.toLowerCase());
 
     return (
-        <div className="min-h-screen bg-gray-100">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="py-2">
+            <div>
                 {error && (
                     <div className="mb-4 p-4 bg-yellow-100 border border-yellow-400 text-yellow-700 rounded-lg">
                         {error}
@@ -255,56 +239,29 @@ function Dashboard() {
                 )}
 
                 <div className="mb-8">
-                    <h1 className="text-3xl font-bold text-gray-900">Home</h1>
+                    <h1 className="text-3xl font-bold !text-gray-900">Home</h1>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    {/* User Profile Section */}
-                    <div className="bg-white rounded-lg shadow-md p-6">
-                        <h2 className="text-xl font-semibold mb-4 text-gray-800">Profile Information</h2>
-                        {user && (
-                            <div className="space-y-3">
-                                <p className="text-gray-700">
-                                    <strong className="text-gray-800">Name:</strong> {user.firstName} {user.lastName}
-                                </p>
-                                <p className="text-gray-700">
-                                    <strong className="text-gray-800">Username:</strong> {user.username}
-                                </p>
-                                <p className="text-gray-700">
-                                    <strong className="text-gray-800">Email:</strong> {user.email}
-                                </p>
-                                <p className="text-gray-700">
-                                    <strong className="text-gray-800">Role:</strong> <span className="capitalize">{user.role}</span>
-                                </p>
-                                <div className='flex justify-center items-center'>
-                                    <button
-                                        type='button'
-                                        className='btn btn-primary px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors'
-                                        onClick={() => setShowPostModal(true)}>
-                                        Post
-                                    </button>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-
+                <div>
                     {/* Posts Section */}
-                    <div className="bg-white rounded-lg shadow-md p-6 lg:col-span-2">
+                    <div className="bg-white rounded-lg shadow-md p-6">
                         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-                            <h2 className="text-xl font-semibold text-gray-800">Recent Posts</h2>
-                            <select
-                                value={selectedCategory}
-                                onChange={(e) => setSelectedCategory(e.target.value)}
-                                className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            >
-                                <option value="all">All categories</option>
-                                {categoryOptions.map((category) => (
-                                    <option key={category} value={category}>{category}</option>
-                                ))}
-                            </select>
+                            <h2 className="text-xl font-semibold !text-gray-900">Recent Posts</h2>
+                            <div className="flex items-center gap-2">
+                                <select
+                                    value={selectedCategory}
+                                    onChange={(e) => setSelectedCategory(e.target.value)}
+                                    className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                >
+                                    <option value="all">All categories</option>
+                                    {categoryOptions.map((category) => (
+                                        <option key={category} value={category}>{category}</option>
+                                    ))}
+                                </select>
+                            </div>
                         </div>
                         {filteredPosts.length > 0 ? (
-                            <div className="space-y-5">
+                            <div className="space-y-3">
                                 {filteredPosts.map((post) => {
                                     const postAuthorId = post?.author?._id || post?.author?.id || post?.authorId;
                                     const isOwnPost = postAuthorId === currentUserId;
