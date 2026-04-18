@@ -23,7 +23,7 @@ function Navigation() {
                     {authenticated && admin && (
                         <Link to="/activities" className="hover:text-gray-300">Activities</Link>
                     )}
-                    <Link to="/test-api" className="hover:text-gray-300">Test API</Link>
+                    {/* <Link to="/test-api" className="hover:text-gray-300">Test API</Link> */}
                 </div>
                 <div>
                     {!authenticated ? (

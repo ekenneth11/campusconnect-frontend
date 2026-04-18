@@ -1,47 +1,70 @@
 import api from './api-helper';
 
+const activityBasePath = '/api/activities';
+
 // Create activity log
 const createActivityLog = async (logData) => {
     try {
-        return await api.post('/activity-logs', logData);
+        return await api.post(activityBasePath, logData);
     } catch (error) {
         console.error('Create activity log error:', error);
         throw error;
     }
 };
 
-// Get logs by user
-const getLogsByUser = async (userId) => {
+// Get activities for current authenticated user
+const getMyActivities = async () => {
     try {
-        return await api.get(`/activity-logs/user/${userId}`);
+        return await api.get(`${activityBasePath}/me`);
     } catch (error) {
-        console.error('Get logs by user error:', error);
+        console.error('Get my activities error:', error);
         throw error;
     }
 };
 
-// Get logs by action
+// Get activities for a specific user
+const getUserActivities = async (userId) => {
+    try {
+        return await api.get(`${activityBasePath}/user/${userId}`);
+    } catch (error) {
+        console.error('Get user activities error:', error);
+        throw error;
+    }
+};
+
+// Get all activities (admin only)
+const getAllActivities = async () => {
+    try {
+        return await api.get(activityBasePath);
+    } catch (error) {
+        console.error('Get all activities error:', error);
+        throw error;
+    }
+};
+
+// Backward-compatible aliases used by existing frontend code.
+const getLogsByUser = getUserActivities;
+const getAllLogs = getAllActivities;
+
+// Backend does not expose an action-filter endpoint; filter client-side from all activities.
 const getLogsByAction = async (action) => {
-    try {
-        return await api.get(`/activity-logs/action/${action}`);
-    } catch (error) {
-        console.error('Get logs by action error:', error);
-        throw error;
-    }
-};
+    const response = await getAllActivities();
+    const list = Array.isArray(response)
+        ? response
+        : response?.activities || response?.data || response?.logs || response?.activityLogs || [];
 
-// Get all logs (admin only)
-const getAllLogs = async () => {
-    try {
-        return await api.get('/activity-logs');
-    } catch (error) {
-        console.error('Get all logs error:', error);
-        throw error;
-    }
+    return {
+        success: true,
+        count: list.filter((item) => item?.action === action).length,
+        activities: list.filter((item) => item?.action === action),
+    };
 };
 
 export default {
     createActivityLog,
+    getMyActivities,
+    getUserActivities,
+    getAllActivities,
     getLogsByUser,
     getLogsByAction,
     getAllLogs

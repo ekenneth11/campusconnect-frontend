@@ -17,10 +17,10 @@ function Activities() {
             setError('');
 
             try {
-                const response = await activityLogApi.getAllLogs();
+                const response = await activityLogApi.getAllActivities();
                 const normalized = Array.isArray(response)
                     ? response
-                    : response?.data || response?.logs || response?.activityLogs || [];
+                    : response?.activities || response?.data || response?.logs || response?.activityLogs || [];
                 setActivities(normalized);
             } catch (fetchError) {
                 console.error('Failed to fetch activity logs:', fetchError);
