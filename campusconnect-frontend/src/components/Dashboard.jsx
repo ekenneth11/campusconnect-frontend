@@ -17,6 +17,7 @@ function Dashboard() {
     const [currentPost, setCurrentPost] = useState(new postModel());
     const [showPostModal, setShowPostModal] = useState(false);
     const [hiddenPostIds, setHiddenPostIds] = useState([]);
+    const [selectedCategory, setSelectedCategory] = useState('all');
 
     const currentUser = getCurrentUser();
     const currentUserId = currentUser?._id || currentUser?.id || currentUser?.userId;
@@ -238,6 +239,10 @@ function Dashboard() {
     }
 
     const visiblePosts = posts.filter((post) => !hiddenPostIds.includes(post._id));
+    const categoryOptions = [...new Set(visiblePosts.map((post) => post?.category).filter(Boolean))].sort();
+    const filteredPosts = selectedCategory === 'all'
+        ? visiblePosts
+        : visiblePosts.filter((post) => String(post?.category || '').toLowerCase() === selectedCategory.toLowerCase());
 
     return (
         <div className="min-h-screen bg-gray-100">
@@ -296,10 +301,22 @@ function Dashboard() {
 
                     {/* Posts Section */}
                     <div className="bg-white rounded-lg shadow-md p-6 lg:col-span-2">
-                        <h2 className="text-xl font-semibold mb-4 text-gray-800">Recent Posts</h2>
-                        {visiblePosts.length > 0 ? (
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+                            <h2 className="text-xl font-semibold text-gray-800">Recent Posts</h2>
+                            <select
+                                value={selectedCategory}
+                                onChange={(e) => setSelectedCategory(e.target.value)}
+                                className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            >
+                                <option value="all">All categories</option>
+                                {categoryOptions.map((category) => (
+                                    <option key={category} value={category}>{category}</option>
+                                ))}
+                            </select>
+                        </div>
+                        {filteredPosts.length > 0 ? (
                             <div className="space-y-5">
-                                {visiblePosts.map((post) => {
+                                {filteredPosts.map((post) => {
                                     const postAuthorId = post?.author?._id || post?.author?.id || post?.authorId;
                                     const isOwnPost = postAuthorId === currentUserId;
                                     const actionItems = isOwnPost
@@ -317,7 +334,7 @@ function Dashboard() {
                                 })}
                             </div>
                         ) : (
-                            <p className="text-gray-500 text-center py-8">No posts available.</p>
+                            <p className="text-gray-500 text-center py-8">No posts available for this category.</p>
                         )}
                     </div>
                 </div>
