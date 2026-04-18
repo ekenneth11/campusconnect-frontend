@@ -154,11 +154,6 @@ function Dashboard() {
         };
     }, []);
 
-    const handleLogout = async () => {
-        await userApi.signout();
-        navigate('/signin');
-    };
-
     const handleChange = (e) => {
         const { name, value } = e.target;
         setCurrentPost((prev) => ({
@@ -259,14 +254,8 @@ function Dashboard() {
                     </div>
                 )}
 
-                <div className="flex justify-between items-center mb-8">
-                    <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-                    <button
-                        onClick={handleLogout}
-                        className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-                    >
-                        Logout
-                    </button>
+                <div className="mb-8">
+                    <h1 className="text-3xl font-bold text-gray-900">Home</h1>
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

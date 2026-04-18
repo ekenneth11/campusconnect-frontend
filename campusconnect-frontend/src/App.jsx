@@ -8,7 +8,9 @@ function App() {
     <>
       <Router>
         <Navigation />
-        <MainRouter />
+        <div className="ml-64 min-h-screen">
+          <MainRouter />
+        </div>
       </Router>
     </>
   );
